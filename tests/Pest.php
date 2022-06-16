@@ -45,3 +45,5 @@ function something()
 {
     // ..
 }
+
+const TESTS_FILE_PATH = __DIR__ . '/files';
