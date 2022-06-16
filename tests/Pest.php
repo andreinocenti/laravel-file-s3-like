@@ -11,7 +11,9 @@
 |
 */
 
-uses(Tests\TestCase::class)->in('Feature');
+use AndreInocenti\LaravelFileS3Like\Tests\TestCase;
+
+uses(TestCase::class)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------
