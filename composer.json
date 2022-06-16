@@ -19,19 +19,18 @@
             "email": "andreinocenti@gmail.com"
         }
     ],
-    "minimum-stability": "stable",
     "require": {
-        "php": "^7.4|^8.0",
-        "ralouphie/mimey": "^1.0"
+        "php": "^8.0",
+        "ralouphie/mimey": "^1.0",
+        "illuminate/contracts": "^8.0|^9.0",
+        "illuminate/http": "^8.0|^9.0",
+        "illuminate/support": "^8.0|^9.0"
     },
     "extra": {
         "laravel": {
             "providers": [
                 "AndreInocenti\\LaravelFileS3Like\\LaravelFileS3LikeServiceProvider"
-            ],
-            "aliases": {
-                "Calculator": "AndreInocenti\\LaravelFileS3Like\\Facades\\FileS3Like"
-            }
+            ]
         }
     },
     "minimum-stability": "dev",
