@@ -11,9 +11,9 @@
 |
 */
 
-use AndreInocenti\LaravelFileS3Like\Tests\TestCase;
+use AndreInocenti\LaravelFileS3Like\Tests\LaravelFileS3LikeTest;
 
-uses(TestCase::class)->in('Feature');
+uses(LaravelFileS3LikeTest::class)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -41,9 +41,9 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function filesPath()
 {
-    // ..
+    return  __DIR__ . '/files';
 }
 
 const TESTS_FILE_PATH = __DIR__ . '/files';
