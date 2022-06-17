@@ -1,4 +1,4 @@
-# Laravel Package - Files to S3 Like Storage
+# Laravel Package - Files to S3 Like Cloud Storage
 
 This is a Laravel package that handles and make easy the upload, overwrite, delete, cdn purge of files and directories on AWS S3 like cloud storages.
 
@@ -21,7 +21,7 @@ Below the optimal config to be used
 
 `config/filesystem.php`
 ```php
-'spaces' => [
+'spaces-disk' => [
     'driver' => 's3',
     'key' => env('SPACES_ACCESS_KEY_ID'),
     'secret' => env('SPACES_SECRET_ACCESS_KEY'),
@@ -42,8 +42,8 @@ You can use the FileS3LikeSpaces facade
 ```php
 use AndreInocenti\LaravelFileS3Like\Facades\FileS3LikeSpaces;
 
-FileS3LikeSpaces::disk('spaces')
-    ->directory('package_test')
+FileS3LikeSpaces::disk('spaces-disk')
+    ->directory('images')
     ->upload($file, 'new-test');
 ```
 
@@ -53,7 +53,7 @@ use AndreInocenti\LaravelFileS3Like\Facades\FileS3Like;
 
 FileS3Like::repository('spaces')
     ->disk('spaces-disk')
-    ->directory('package_test')
+    ->directory('images')
     ->upload($file, 'new-test');
 ```
 
