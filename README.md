@@ -85,9 +85,7 @@ FileS3Like::repository('spaces')
     <td>directory(string $directory)</td>
     <td>
         The directory in the cloud storage bucket that will be handled. <b>Important:</b> It will concat with the folder configurated in the file filesystem.
-
         The folder configuration, is good to have always the same base directory configured, instead of the "directory()" that can change anytime
-
         EG.: if folder was configured to be "public", and the directory "images", the final path will be `public/images`.
     </td>
 </tr>
@@ -95,7 +93,6 @@ FileS3Like::repository('spaces')
     <td>upload(UploadedFile|string $file, ?string $filename = null)</td>
     <td>
         Upload the file to the storage.
-
         If $filename is empty, the name of the file will be aUUID hash.
     </td>
 </tr>
@@ -103,20 +100,15 @@ FileS3Like::repository('spaces')
     <td>save(string $repository)</td>
     <td>
         Upload and update the file on the space disk, purge cache and return the file url.
-
         If a file with the same name already exists, it will be overwritten and  the cache will be purged.
-
         If it is a new file, it will only be uploaded.
-
         If $filename is empty, the name of the file will be aUUID hash.
     </td>
 </tr>
 <tr>
     <td>purge(string $filepath)</td>
     <td>
-        Purges a CDN cache of a file.
-
-        $filename - Inform the file name and path of the file to be purged.
+        Purges a CDN cache of a file. $filename - Inform the file name and path of the file to be purged.
     </td>
 </tr>
 <tr>
