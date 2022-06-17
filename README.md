@@ -13,6 +13,10 @@ In the future I will add new cloud storages support or accept pull requests.
 
 ## Configuration
 
+You should install it via composer:
+
+`composer require andreinocenti/laravel-file-s3-like`
+
 This package use the Laravel Illuminate\Support\Facades\Storage facade to handle the files.
 
 So you must config the filesystem AWS like disk that you want to use.
