@@ -31,7 +31,11 @@
         "laravel": {
             "providers": [
                 "AndreInocenti\\LaravelFileS3Like\\LaravelFileS3LikeServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "FileS3Like": "AndreInocenti\\LaravelFileS3Like\\Facades\\FileS3Like",
+                "FileS3LikeSpaces": "AndreInocenti\\LaravelFileS3Like\\Facades\\FileS3LikeSpaces"
+            }
         }
     },
     "minimum-stability": "dev",
