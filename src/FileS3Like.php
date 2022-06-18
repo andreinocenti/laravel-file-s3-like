@@ -50,16 +50,16 @@ class FileS3Like implements FileS3LikeInterface
     {
         $defaultMsg = "See the LaravelFileS3Like docs for more info. Access: https://github.com/andreinocenti/laravel-file-s3-like";
 
-        if (!$this->repository) {
+        if (!$this->repoInstance->repository) {
             throw new \Exception("You must set a valid repository before call any other function. $defaultMsg");
         }
 
-        if (!$this->disk) {
+        if (!$this->repoInstance->disk) {
             throw new \Exception("You must call the disk() function before other functions. $defaultMsg");
         }
 
-        if (!$this->endpoint) {
-            throw new \Exception("The Disk '{$this->disk}' endpoint is not configured. See the LaravelFileS3Like docs for more info. $defaultMsg");
+        if (!$this->repoInstance->endpoint) {
+            throw new \Exception("The Disk '{$this->repoInstance->disk}' endpoint is not configured. See the LaravelFileS3Like docs for more info. $defaultMsg");
         }
 
         return true;
@@ -73,14 +73,16 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function disk(string $disk): self
     {
-        $this->disk = $disk;
-        $this->endpoint = config("filesystems.disks.$disk.endpoint");
+        $this->repoInstance->disk = $disk;
+        $this->repoInstance->endpoint = config("filesystems.disks.$disk.endpoint");
 
         $this->isAllSetup();
-        $this->cdnEndpoint = config("filesystems.disks.$disk.cdn_endpoint");
-        $this->cdnEndpoint = $this->cdnEndpoint ?: $this->endpoint;
-        $this->folder = config("filesystems.disks.$disk.folder") ?: '';
-        $this->directory = $this->folder ? $this->folder : '';
+        $this->repoInstance->cdnEndpoint = config("filesystems.disks.$disk.cdn_endpoint");
+        $this->repoInstance->cdnEndpoint = $this->cdnEndpoint ?: $this->endpoint;
+        $this->repoInstance->folder = config("filesystems.disks.$disk.folder") ?: '';
+        $this->repoInstance->directory = $this->repoInstance->folder
+            ? $this->repoInstance->folder . ($this->repoInstance->directory ?: '')
+            : '';
 
         return $this;
     }
@@ -93,7 +95,7 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function directory(string $directory): self
     {
-        $this->directory = $this->folder ? $this->folder . '/' . $directory : $directory;
+        $this->repoInstance->directory = $this->repoInstance->folder ? $this->repoInstance->folder . '/' . $directory : $directory;
         return $this;
     }
 
@@ -105,7 +107,7 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function visibility(string $visibility): self
     {
-        $this->visibility = $visibility;
+        $this->repoInstance->visibility = $visibility;
         return $this;
     }
 
@@ -117,6 +119,8 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function upload(UploadedFile|string $file, ?string $filename = null): DiskFile
     {
+        $this->isAllSetup();
+
         return $this->repoInstance->upload($file, $filename);
     }
 
@@ -131,6 +135,7 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function save(UploadedFile|string $file, ?string $filename = null): DiskFile
     {
+        $this->isAllSetup();
         return $this->repoInstance->save($file, $filename);
     }
 
@@ -143,6 +148,7 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function purge(string $filename): self
     {
+        $this->isAllSetup();
         return $this->repoInstance->purge($filename);
     }
 
@@ -154,6 +160,7 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function delete(string|array $file): self
     {
+        $this->isAllSetup();
         return $this->repoInstance->delete($file);
     }
 
@@ -164,6 +171,7 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function deleteDirectory(): self
     {
+        $this->isAllSetup();
         return $this->repoInstance->deleteDirectory();
     }
 }
