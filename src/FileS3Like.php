@@ -38,6 +38,7 @@ class FileS3Like implements FileS3LikeInterface
             'spaces' => new FileS3LikeSpaces(),
             default => throw new \Exception("The repository '$repository' is not supported", 1)
         };
+        $this->repoInstance->repository = $repository;
         return $this;
     }
 
@@ -50,7 +51,7 @@ class FileS3Like implements FileS3LikeInterface
     {
         $defaultMsg = "See the LaravelFileS3Like docs for more info. Access: https://github.com/andreinocenti/laravel-file-s3-like";
 
-        if (!$this->repoInstance->repository) {
+        if (!$this->repoInstance || !$this->repository) {
             throw new \Exception("You must set a valid repository before call any other function. $defaultMsg");
         }
 
