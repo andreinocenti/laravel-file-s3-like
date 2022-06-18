@@ -72,7 +72,7 @@ FileS3Like::repository('spaces')
 <tr>
     <td>repository(string $repository)</td>
     <td>
-        The repository is the s3 like service that this package support, that you want to use. Eg.: spaces. Check the [Support list](Support)
+        The repository is the s3 like service that this package support, that you want to use. Eg.: spaces. Check the <a href="#support">Support list</a>
     </td>
 </tr>
 <tr>
