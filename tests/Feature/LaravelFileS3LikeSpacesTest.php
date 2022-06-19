@@ -6,11 +6,6 @@ use Illuminate\Support\Facades\Storage;
 
 use function PHPUnit\Framework\assertTrue;
 
-function toBase64($filepath)
-{
-    return base64_encode(file_get_contents($filepath));
-}
-
 test('save text file on storage via UploadedFile', function () {
     $filepath = filesPath() . '/test-file.txt';
     $file = new UploadedFile($filepath, 'test.txt', 'text/plain', null, true);

@@ -5,11 +5,6 @@ use Illuminate\Http\UploadedFile;
 
 use function PHPUnit\Framework\assertTrue;
 
-function toBase64($filepath)
-{
-    return base64_encode(file_get_contents($filepath));
-}
-
 test('test UploadedFile for txt file', function () {
     $filepath = TESTS_FILE_PATH . '/test-file.txt';
     $file = new UploadedFile($filepath, 'test.txt', 'text/plain', null, true);

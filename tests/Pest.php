@@ -47,3 +47,8 @@ function filesPath()
 }
 
 const TESTS_FILE_PATH = __DIR__ . '/files';
+
+function toBase64($filepath)
+{
+    return base64_encode(file_get_contents($filepath));
+}
