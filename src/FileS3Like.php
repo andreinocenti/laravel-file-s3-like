@@ -95,7 +95,9 @@ class FileS3Like implements FileS3LikeInterface
      */
     public function directory(string $directory): self
     {
-        $this->repoInstance->directory = $this->repoInstance->folder ? $this->repoInstance->folder . '/' . $directory : $directory;
+        $this->repoInstance->directory = $this->repoInstance->folder
+            ? $this->repoInstance->folder . (str_ends_with($this->repoInstance->folder, '/') ? '' : '/') . $directory
+            : $directory;
         return $this;
     }
 
