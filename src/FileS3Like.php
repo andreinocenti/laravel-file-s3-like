@@ -6,8 +6,7 @@ use AndreInocenti\LaravelFileS3Like\Contracts\FileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
 use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeSpaces;
 use Illuminate\Http\UploadedFile;
-
-
+use Illuminate\Support\Facades\Storage;
 
 class FileS3Like implements FileS3LikeInterface
 {
@@ -174,5 +173,27 @@ class FileS3Like implements FileS3LikeInterface
     {
         $this->isAllSetup();
         return $this->repoInstance->deleteDirectory();
+    }
+
+    /**
+     * List directories in the directory set
+     *
+     * @return array
+     */
+    public function directories(): array
+    {
+        $this->isAllSetup();
+        return Storage::disk($this->repoInstance->disk)->directories($this->repoInstance->directory);
+    }
+
+    /**
+     * List files in the directory set
+     *
+     * @return array
+     */
+    public function files(): array
+    {
+        $this->isAllSetup();
+        return Storage::disk($this->repoInstance->disk)->files($this->repoInstance->directory);
     }
 }
