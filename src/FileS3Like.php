@@ -79,7 +79,7 @@ class FileS3Like implements FileS3LikeInterface
 
         $this->isAllSetup();
         $this->repoInstance->cdnEndpoint = config("filesystems.disks.$disk.cdn_endpoint");
-        $this->repoInstance->cdnEndpoint = $this->cdnEndpoint ?: $this->endpoint;
+        $this->repoInstance->cdnEndpoint = $this->repoInstance->cdnEndpoint ?: $this->repoInstance->endpoint;
         $this->repoInstance->folder = config("filesystems.disks.$disk.folder") ?: '';
         $this->repoInstance->directory = $this->repoInstance->folder
             ? $this->repoInstance->folder . ($this->repoInstance->directory ?: '')
