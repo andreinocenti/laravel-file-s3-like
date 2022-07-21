@@ -33,6 +33,8 @@ class File{
     {
         $this->file = file_get_contents($this->fileToHandle);
         $this->extension = strtolower($this->fileToHandle->getClientOriginalExtension());
+        $mimes = new \Mimey\MimeTypes;
+        $this->mime = $mimes->getMimeType($this->extension);
         $suffix = '.' . $this->extension;
         $this->filename = preg_replace("/$suffix$/", '', $this->filename);
         $this->filename = $this->filename . $suffix;
@@ -46,6 +48,7 @@ class File{
         $mime = $this->base64_mimetype($this->fileToHandle);
         $mimes = new \Mimey\MimeTypes;
         $this->extension = $mimes->getExtension($mime) ?: '';
+        $this->mime = $mimes->getMimeType($this->extension);
         $this->filename = $this->filename . '.' . $this->extension;
         $this->file = base64_decode($this->fileToHandle);
     }
@@ -64,6 +67,12 @@ class File{
     {
         return $this->file;
     }
+
+    public function getMime()
+    {
+        return $this->mime;
+    }
+
 
     function base64_mimetype(string $encoded, bool $strict = true): ?string
     {

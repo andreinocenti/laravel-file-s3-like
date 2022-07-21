@@ -47,7 +47,8 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
             $filepath,
             $filename,
             $this->cdnEndpoint. '/' . $filepath,
-            $file->getExtension()
+            $file->getExtension(),
+            $file->getMime()
         );
     }
 

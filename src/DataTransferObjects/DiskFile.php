@@ -8,7 +8,8 @@ class DiskFile
         protected string $filepath,
         protected string $filename,
         protected string $url,
-        protected ?string $extension = null
+        protected ?string $extension = null,
+        protected ?string $mime = null,
     ) {
     }
 
@@ -50,5 +51,15 @@ class DiskFile
     public function getExtension(): string
     {
         return $this->extension;
+    }
+
+    /**
+     * returns the file mime type
+     *
+     * @return string
+     */
+    public function getMime(): string
+    {
+        return $this->mime;
     }
 }
