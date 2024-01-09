@@ -36,8 +36,20 @@ test('test base64 for png image file', function () {
     $file = new File(toBase64($filepath), 'new-file');
     assertTrue($file->getExtension() == 'png');
     assertTrue($file->getFilename() == 'new-file.png');
+    assertTrue($file->getMime() == 'image/png');
     assertTrue($file->getFile() == file_get_contents($filepath));
 });
+
+test('test UploadedFile for avif file', function () {
+    $filepath = TESTS_FILE_PATH . '/test-file.avif';
+    $file = new UploadedFile($filepath, 'test.avif');
+    $file = new File($file, 'new-file.avif');
+    assertTrue($file->getExtension() == 'avif');
+    assertTrue($file->getFilename() == 'new-file.avif');
+    assertTrue($file->getMime() == 'image/avif');
+    assertTrue($file->getFile() == file_get_contents($filepath));
+});
+
 
 
 test('test base64 for data uri text file', function () {

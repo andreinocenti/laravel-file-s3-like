@@ -1,6 +1,7 @@
 <?php
 
 use AndreInocenti\LaravelFileS3Like\Facades\FileS3LikeSpaces;
+use AndreInocenti\LaravelFileS3Like\Services\File;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -41,4 +42,15 @@ test('save image file on storage via BASE64', function () {
     assertTrue(Storage::disk('spaces')->exists($diskFile->getFilepath()));
     assertTrue(file_get_contents($diskFile->getUrl()) == file_get_contents($filepath));
     Storage::disk('spaces')->delete($diskFile->getFilepath());
+});
+
+
+test('test UploadedFile for avif file', function () {
+    $filepath = filesPath() . '/test-file.avif';
+    $file = new UploadedFile($filepath, 'test.avif');
+    $file = new File($file, 'new-file.avif');
+    assertTrue($file->getExtension() == 'avif');
+    assertTrue($file->getFilename() == 'new-file.avif');
+    assertTrue($file->getMime() == 'image/avif');
+    assertTrue($file->getFile() == file_get_contents($filepath));
 });

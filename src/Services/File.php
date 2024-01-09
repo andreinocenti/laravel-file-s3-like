@@ -11,12 +11,14 @@ use Mimey\MimeTypes;
 class File{
     private string $extension = '';
     private string $mime = '';
+    private MimeTypes $mimeTypes;
     private $file;
     public function __construct(
         protected UploadedFile|string $fileToHandle,
         protected ?string $filename = null
     )
     {
+        $this->initiateMimeTypeAndCustomMimes();
         $this->init();
     }
 
@@ -35,8 +37,7 @@ class File{
     {
         $this->file = file_get_contents($this->fileToHandle);
         $this->extension = strtolower($this->fileToHandle->getClientOriginalExtension());
-        $mimes = new MimeTypes();
-        $this->mime = $mimes->getMimeType($this->extension);
+        $this->mime = $this->mimeTypes->getMimeType($this->extension) ?: '';
         $suffix = '.' . $this->extension;
         $this->filename = preg_replace("/$suffix$/", '', $this->filename);
         $this->filename = $this->filename . $suffix;
@@ -48,9 +49,8 @@ class File{
             $this->fileToHandle = substr($this->fileToHandle, strpos($this->fileToHandle, ',') + 1);
         }
         $mime = $this->base64_mimetype($this->fileToHandle);
-        $mimes = new MimeTypes();
-        $this->extension = $mimes->getExtension($mime) ?: '';
-        $this->mime = $mimes->getMimeType($this->extension);
+        $this->extension = $this->mimeTypes->getExtension($mime) ?: '';
+        $this->mime = $this->mimeTypes->getMimeType($this->extension) ?: '';
         $this->filename = $this->filename . '.' . $this->extension;
         $this->file = base64_decode($this->fileToHandle);
     }
@@ -89,5 +89,12 @@ class File{
         }
 
         return null;
+    }
+
+    function initiateMimeTypeAndCustomMimes()
+    {
+        $builder = \Mimey\MimeMappingBuilder::create();
+        $builder->add('image/avif', 'avif');
+        $this->mimeTypes = new MimeTypes($builder->getMapping());
     }
 }
