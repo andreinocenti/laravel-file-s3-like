@@ -3,12 +3,14 @@ namespace AndreInocenti\LaravelFileS3Like\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use Mimey\MimeTypes;
 
 /**
  * Class to handle the file to be ready to be put in the storage, and handle filename and extension. T
  */
 class File{
     private string $extension = '';
+    private string $mime = '';
     private $file;
     public function __construct(
         protected UploadedFile|string $fileToHandle,
@@ -33,7 +35,7 @@ class File{
     {
         $this->file = file_get_contents($this->fileToHandle);
         $this->extension = strtolower($this->fileToHandle->getClientOriginalExtension());
-        $mimes = new \Mimey\MimeTypes;
+        $mimes = new MimeTypes();
         $this->mime = $mimes->getMimeType($this->extension);
         $suffix = '.' . $this->extension;
         $this->filename = preg_replace("/$suffix$/", '', $this->filename);
@@ -46,7 +48,7 @@ class File{
             $this->fileToHandle = substr($this->fileToHandle, strpos($this->fileToHandle, ',') + 1);
         }
         $mime = $this->base64_mimetype($this->fileToHandle);
-        $mimes = new \Mimey\MimeTypes;
+        $mimes = new MimeTypes();
         $this->extension = $mimes->getExtension($mime) ?: '';
         $this->mime = $mimes->getMimeType($this->extension);
         $this->filename = $this->filename . '.' . $this->extension;
