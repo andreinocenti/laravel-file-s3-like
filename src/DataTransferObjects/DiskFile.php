@@ -20,7 +20,7 @@ class DiskFile
      */
     public function getFilepath(): string
     {
-        return $this->filepath;
+        return $this->filepath ?: '';
     }
 
     /**
@@ -30,7 +30,7 @@ class DiskFile
      */
     public function getFilename(): string
     {
-        return $this->filename;
+        return $this->filename ?: '';
     }
 
     /**
@@ -40,7 +40,7 @@ class DiskFile
      */
     public function getUrl(): string
     {
-        return $this->url;
+        return $this->url  ?: '';
     }
 
     /**
@@ -50,7 +50,7 @@ class DiskFile
      */
     public function getExtension(): string
     {
-        return $this->extension;
+        return $this->extension  ?: '';
     }
 
     /**
@@ -60,6 +60,6 @@ class DiskFile
      */
     public function getMime(): string
     {
-        return $this->mime;
+        return $this->mime  ?: '';
     }
 }
