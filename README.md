@@ -2,7 +2,9 @@
 
 This is a Laravel package that handles and make easy the upload, overwrite, delete, cdn purge of files and directories on AWS S3 like cloud storages.
 
-It supports a form uploaded file (UploadedFile) or a base64 file string
+It supports sending a file URL, a form uploaded file (UploadedFile) or a base64 file string.
+
+It supports generating a presigned url.
 
 
 ## Support
@@ -104,6 +106,13 @@ FileS3Like::repository('spaces')
             If a file with the same name already exists, it will be overwritten and  the cache will be purged.
             If it is a new file, it will only be uploaded.
             If $filename is empty, the name of the file will be aUUID hash.
+        </td>
+    </tr>
+    <tr>
+        <td>presignedUrl(string $filepath, int $expiration = 900): object</td>
+        <td>
+            Create and return a presigned URL for the file located at $filepath.
+            $expiration - The time in seconds for which the presigned URL will be valid. Default is 900 seconds (15 minutes).
         </td>
     </tr>
     <tr>
