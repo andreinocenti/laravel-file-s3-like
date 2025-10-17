@@ -7,6 +7,7 @@ use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
 use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeSpaces;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Fluent;
 
 class FileS3Like implements FileS3LikeInterface
 {
@@ -75,7 +76,6 @@ class FileS3Like implements FileS3LikeInterface
     {
         $this->repoInstance->disk = $disk;
         $this->repoInstance->endpoint = config("filesystems.disks.$disk.endpoint");
-
         $this->isAllSetup();
         $this->repoInstance->cdnEndpoint = config("filesystems.disks.$disk.cdn_endpoint");
         $this->repoInstance->cdnEndpoint = $this->repoInstance->cdnEndpoint ?: $this->repoInstance->endpoint;
@@ -197,5 +197,28 @@ class FileS3Like implements FileS3LikeInterface
     {
         $this->isAllSetup();
         return Storage::disk($this->repoInstance->disk)->files($this->repoInstance->directory);
+    }
+
+
+    /**
+     * Create a presigned URL for a file in the s3 like disk
+     * $fileType eg: 'jpg', 'video/mp4', 'image/*', null (default)
+     *
+     * @param string $fileName - The path to the file
+     * @param string $fileName - The filename, without the path. If null, a UUID will be generated
+     * @param int $expiration - The expiration time in seconds (default 900 seconds)
+     * @param string|null $fileType - The file type(s) to be allowed for the presigned URL
+     * @return Fluent - The presigned URL
+     */
+    public function presignedUrl(
+        string $filepath,
+        ?string $filename = null,
+        int $expiration = 900,
+        string|null $fileType = null,
+        bool $public = false
+    ): Fluent
+    {
+        $this->isAllSetup();
+        return $this->repoInstance->presignedUrl($filepath, $filename, $expiration, $fileType);
     }
 }

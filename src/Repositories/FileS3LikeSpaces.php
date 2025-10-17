@@ -5,11 +5,13 @@ use AndreInocenti\LaravelFileS3Like\Contracts\FileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
 use AndreInocenti\LaravelFileS3Like\FileS3Like;
 use AndreInocenti\LaravelFileS3Like\Services\File;
+use AndreInocenti\LaravelFileS3Like\Services\MimeType;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Fluent;
 use Illuminate\Support\Str;
-
+use Mimey\MimeTypes;
 
 class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
     public function __construct()
@@ -41,7 +43,6 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
         $file = new File($file, $filename);
         $filename = $file->getFilename();
         $filepath = "{$this->directory}/{$filename}";
-
         Storage::disk($this->disk)->put($filepath, $file->getFile(), $this->visibility);
         return new DiskFile(
             $filepath,
@@ -117,5 +118,103 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
     {
         Storage::disk($this->disk)->deleteDirectory($this->directory);
         return $this;
+    }
+
+    /**
+     * Create a presigned URL for a file in the s3 like disk
+     * $fileType eg: 'jpg', 'video/mp4', 'image/*', null (default)
+     *
+     * @param string $fileName - The path to the file
+     * @param string $fileName - The filename, without the path. If null, a UUID will be generated
+     * @param int $expiration - The expiration time in seconds (default 900 seconds)
+     * @param string|null $fileType - The file type(s) to be allowed for the presigned URL
+     * @return Fluent - The presigned URL
+     */
+    public function presignedUrl(
+        string $filepath,
+        ?string $filename = null,
+        int $expiration = 900,
+        string|null $fileType = null,
+        bool $public = false,
+    ): Fluent
+    {
+        $this->isAllSetup();
+        // build filename
+        $filename = $filename ?: (string)Str::uuid();
+
+        $expiration = now()->addSeconds($expiration);
+
+        // Infer extension and mime
+        $mimeTypes = (new MimeType())->mimeTypes();
+        $mime = '';
+        $ext = '';
+        if($fileType){
+            if (str_contains($fileType, '/')) {
+                // É MIME
+                $ext = $mimeTypes->getExtension(strtolower($fileType));
+                $mime = strtolower($fileType);
+            } else {
+                // É extensão
+                $ext  = ltrim(strtolower($fileType), '.');
+                $mime = $mimeTypes->getMimeType($ext) ?: '';
+            }
+        }else{
+            $ext = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+            $mime = $mimeTypes->getMimeType($ext) ?: '';
+        }
+
+        // change/add extension to filename
+        // check if filename has extension
+        if(!str_ends_with($filename, '.' . $ext)){
+            $filename = preg_replace('/\.[^.]+$/', '', $filename); // remove existing extension
+            $filename .= '.' . $ext; // add new extension
+        }
+        // check if last chart of filepath is /
+        if(!str_ends_with($filepath, '/')){
+            $filepath = rtrim($filepath, '/');
+        }
+        $filepath = "{$this->directory}/$filepath/{$filename}";
+
+        $data = Storage::disk($this->disk)->temporaryUploadUrl($filepath, $expiration, [
+            'ContentType' => $mime,
+            'ACL' => $public ? 'public-read' : 'private',
+        ]);
+        return new Fluent([
+            'presigned_url' => $data['url'],
+            'key' => $filepath,
+            'public_url' => $this->cdnEndpoint . '/' . $filepath,
+            'expires' => $expiration->toDateTimeString(),
+            'headers' => $data['headers'],
+            'accepted_mime' => $mime,
+            'accepted_ext' => $ext,
+        ]);
+    }
+
+
+    /**
+     * @return string|null
+     */
+    private function guessMimeFromExtension(string $ext): ?string
+    {
+        if ($ext === '') {
+            return null;
+        }
+
+        $mimeTypes = (new MimeType())->mimeTypes();
+
+        $mimes = $mimeTypes->getMimeType($ext);
+        return $mimes[0] ?? null;
+    }
+
+    /**
+     * @return string|null
+     */
+    private function guessExtensionFromMime(string $mime): ?string
+    {
+        if ($mime === '') {
+            return null;
+        }
+        $exts = MimeTypes::getDefault()->getExtensions($mime);
+        return $exts[0] ?? null;
     }
 }
