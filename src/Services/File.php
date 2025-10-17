@@ -27,7 +27,11 @@ class File{
         $this->filename = $this->filename ?: (string) Str::uuid();
 
         if (gettype($this->fileToHandle) == 'string') {
-            $this->base64();
+            if(Str::isUrl($this->fileToHandle, ['http', 'https'])){
+                $this->fromUrl();
+            }else{
+                $this->base64();
+            }
         }else{
             $this->formFile();
         }
@@ -53,6 +57,16 @@ class File{
         $this->mime = $this->mimeTypes->getMimeType($this->extension) ?: '';
         $this->filename = $this->filename . '.' . $this->extension;
         $this->file = base64_decode($this->fileToHandle);
+    }
+
+    private function fromUrl()
+    {
+        $this->file = file_get_contents($this->fileToHandle);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $this->mime = finfo_buffer($finfo, $this->file);
+        finfo_close($finfo);
+        $this->extension = $this->mimeTypes->getExtension($this->mime) ?: '';
+        $this->filename = $this->filename . '.' . $this->extension;
     }
 
     public function getExtension()
@@ -93,8 +107,10 @@ class File{
 
     function initiateMimeTypeAndCustomMimes()
     {
-        $builder = \Mimey\MimeMappingBuilder::create();
-        $builder->add('image/avif', 'avif');
-        $this->mimeTypes = new MimeTypes($builder->getMapping());
+        $this->mimeTypes = (new MimeType())->mimeTypes();
+        // $builder = \Mimey\MimeMappingBuilder::create();
+        // $builder->add('image/avif', 'avif');
+        // $this->mimeTypes = new MimeTypes($builder->getMapping());
     }
+
 }
