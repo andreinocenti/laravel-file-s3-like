@@ -219,6 +219,6 @@ class FileS3Like implements FileS3LikeInterface
     ): Fluent
     {
         $this->isAllSetup();
-        return $this->repoInstance->presignedUrl($filepath, $filename, $expiration, $fileType);
+        return $this->repoInstance->presignedUrl($filepath, $filename, $expiration, $fileType, $public);
     }
 }
