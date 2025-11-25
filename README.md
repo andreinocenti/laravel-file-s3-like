@@ -109,10 +109,13 @@ FileS3Like::repository('spaces')
         </td>
     </tr>
     <tr>
-        <td>presignedUrl(string $filepath, int $expiration = 900): object</td>
+        <td>presignedUrl(string $filepath, ?string $filename = null, int $expiration = 900, string|null $fileType = null, bool $public = false): object</td>
         <td>
-            Create and return a presigned URL for the file located at $filepath.
-            $expiration - The time in seconds for which the presigned URL will be valid. Default is 900 seconds (15 minutes).
+            Create a presigned URL for direct upload to the path in <code>$filepath</code> (relative to the configured folder).
+            <code>$filename</code> is optional and defaults to a UUID; extension is inferred from <code>$fileType</code> or the filename.
+            <code>$fileType</code> accepts a mime type or extension (eg: <code>image/png</code>, <code>jpg</code>, <code>image/*</code>) and is used to set Content-Type.
+            <code>$public</code> toggles the ACL between <code>private</code> (default) and <code>public-read</code>.
+            <code>$expiration</code> is in seconds; default is 900 (15 minutes).
         </td>
     </tr>
     <tr>
@@ -146,6 +149,45 @@ FileS3Like::repository('spaces')
         </td>
     </tr>
 </table>
+
+### Presigned URL usage
+
+Use `presignedUrl` when you need a temporary URL for clients to upload directly to the bucket.
+
+```php
+use AndreInocenti\LaravelFileS3Like\Facades\FileS3LikeSpaces;
+
+$upload = FileS3LikeSpaces::disk('spaces-disk')
+    ->directory('uploads')
+    ->presignedUrl(
+        filepath: 'avatars',         // directory inside the configured folder
+        filename: 'profile.png',     // optional; defaults to UUID
+        expiration: 600,             // seconds
+        fileType: 'image/png',       // mime or extension; sets Content-Type
+        public: true,                // optional; false keeps it private
+    );
+
+return response()->json($upload);
+```
+
+The returned `Fluent` object contains the presigned URL and useful metadata:
+
+```json
+{
+  "presigned_url": "https://bucket.nyc3.digitaloceanspaces.com/uploads/avatars/profile.png?...",
+  "key": "uploads/avatars/profile.png",
+  "public_url": "https://cdn.example.com/uploads/avatars/profile.png",
+  "expires": "2024-04-30 12:34:56",
+  "headers": {
+    "Content-Type": "image/png",
+    "ACL": "public-read"
+  },
+  "accepted_mime": "image/png",
+  "accepted_ext": "png"
+}
+```
+
+Send the provided `headers` with the upload request to ensure the ACL and mime type are applied.
 
 ### DiskFile
 
