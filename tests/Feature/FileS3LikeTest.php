@@ -61,7 +61,8 @@ test('Create and use a Presigned URL for a PNG file with typeFile', function () 
     $presigned = FileS3Like::repository('spaces')->disk('spaces')->directory('package_test')->presignedUrl(
         filepath: $filepath,
         expiration: 600,
-        fileType: 'image/png'
+        fileType: 'image/png',
+        public: true
     );
 
     // PNG 1x1 transparente (base64) — evita depender de GD/Imagick
