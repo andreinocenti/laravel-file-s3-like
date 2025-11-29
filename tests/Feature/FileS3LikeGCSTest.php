@@ -30,12 +30,13 @@ test('save text file on GCS storage via UploadedFile', function () {
     withoutExceptionHandling();
     $filepath = filesPath() . '/test-file.txt';
     $file = new UploadedFile($filepath, 'test.txt', 'text/plain', null, true);
+    $filename = 'new-test-gcs-' . uniqid();
 
     $diskFile = FileS3Like::repository('gcs')
         ->disk('gcs')
         ->directory('package_test_gcs')
         ->visibility(null)
-        ->upload($file, 'new-test-gcs');
+        ->upload($file, $filename);
 
     assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
 
@@ -50,12 +51,13 @@ test('save text file on GCS storage via UploadedFile', function () {
 test('save image file on GCS storage via UploadedFile', function () {
     $filepath = filesPath() . '/test-file.png';
     $file = new UploadedFile($filepath, 'test.png');
+    $filename = 'new-test-img-gcs-' . uniqid();
 
     $diskFile = FileS3Like::repository('gcs')
         ->disk('gcs')
         ->directory('package_test_gcs')
         ->visibility(null)
-        ->upload($file, 'new-test-img-gcs');
+        ->upload($file, $filename);
 
     assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
     assertTrue(file_get_contents($diskFile->getUrl()) == file_get_contents($filepath));
@@ -65,11 +67,12 @@ test('save image file on GCS storage via UploadedFile', function () {
 
 test('save text file on GCS storage via BASE64', function () {
     $filepath = filesPath() . '/test-file.txt';
+    $filename = 'new-test-b64-gcs-' . uniqid();
     $diskFile = FileS3Like::repository('gcs')
         ->disk('gcs')
         ->directory('package_test_gcs')
         ->visibility(null)
-        ->upload(toBase64($filepath), 'new-test-b64-gcs');
+        ->upload(toBase64($filepath), $filename);
 
     assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
     assertTrue(file_get_contents($diskFile->getUrl()) == file_get_contents($filepath));
@@ -79,11 +82,12 @@ test('save text file on GCS storage via BASE64', function () {
 
 test('save image file on GCS storage via BASE64', function () {
     $filepath = filesPath() . '/test-file.png';
+    $filename = 'new-test-img-b64-gcs-' . uniqid();
     $diskFile = FileS3Like::repository('gcs')
         ->disk('gcs')
         ->directory('package_test_gcs')
         ->visibility(null)
-        ->upload(toBase64($filepath), 'new-test-img-b64-gcs');
+        ->upload(toBase64($filepath), $filename);
 
     assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
     assertTrue(file_get_contents($diskFile->getUrl()) == file_get_contents($filepath));
@@ -156,4 +160,29 @@ test('Purge on GCS is a no-op but does not crash', function () {
         ->purge('some-file.txt');
 
     expect($result)->toBeInstanceOf(\AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeGCS::class);
+});
+
+test('save text file on GCS storage with CDN', function () {
+    $cdn = 'https://my-cdn.com';
+    config()->set('filesystems.disks.gcs.cdn_endpoint', $cdn);
+
+    $filepath = filesPath() . '/test-file.txt';
+    $file = new UploadedFile($filepath, 'test.txt', 'text/plain', null, true);
+    $filename = 'test-cdn-gcs-' . uniqid();
+
+    // Note: We need to re-initialize or call disk() again to pick up the new config in repoInstance
+    $diskFile = FileS3Like::repository('gcs')
+        ->disk('gcs')
+        ->directory('package_test_gcs')
+        ->visibility(null)
+        ->upload($file, $filename);
+
+    assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
+    
+    // Check URL starts with CDN
+    expect($diskFile->getUrl())->toStartWith($cdn);
+    expect($diskFile->getUrl())->toBe($cdn . "/package_test_gcs/{$filename}.txt");
+
+    // Cleanup
+    Storage::disk('gcs')->delete($diskFile->getFilepath());
 });

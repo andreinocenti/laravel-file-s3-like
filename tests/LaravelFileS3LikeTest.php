@@ -55,6 +55,7 @@ class LaravelFileS3LikeTest extends \Orchestra\Testbench\TestCase
             'bucket' => env('GOOGLE_CLOUD_STORAGE_BUCKET'),
             'path_prefix' => env('GOOGLE_CLOUD_STORAGE_PATH_PREFIX'),
             'storage_api_uri' => env('GOOGLE_CLOUD_STORAGE_API_URI'), // Optional
+            'cdn_endpoint' => env('GOOGLE_CLOUD_STORAGE_BUCKET_CDN'),
             'throw' => true,
             'uniform_bucket_level_access' => true,
             'uniformBucketLevelAccess' => true,

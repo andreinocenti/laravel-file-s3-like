@@ -66,7 +66,10 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
         $filepath = "{$this->directory}/{$filename}";
         $options = $this->visibility ? $this->visibility : [];
         Storage::disk($this->disk)->put($filepath, $file->getFile());
-        $url = Storage::disk($this->disk)->url($filepath);
+
+        $url = $this->cdnEndpoint
+            ? rtrim($this->cdnEndpoint, '/') . '/' . $filepath
+            : Storage::disk($this->disk)->url($filepath);
         return new DiskFile(
             $filepath,
             $filename,
