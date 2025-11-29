@@ -56,7 +56,7 @@ Then configure the disk in `config/filesystem.php`:
 'gcs' => [
     'driver' => 'gcs',
     'project_id' => env('GOOGLE_CLOUD_PROJECT_ID', 'your-project-id'),
-    'key_file' => env('GOOGLE_APPLICATION_CREDENTIALS'), // Path to service account json file
+    'key_file_path' => env('GOOGLE_APPLICATION_CREDENTIALS'), // Path to service account json file
     'bucket' => env('GOOGLE_CLOUD_STORAGE_BUCKET', 'your-bucket'),
     'path_prefix' => env('GOOGLE_CLOUD_STORAGE_PATH_PREFIX', null), // Optional: prefix for all files
     'storage_api_uri' => env('GOOGLE_CLOUD_STORAGE_API_URI', null), // Optional: custom API URI
