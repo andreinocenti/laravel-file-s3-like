@@ -4,6 +4,7 @@ namespace AndreInocenti\LaravelFileS3Like;
 
 use AndreInocenti\LaravelFileS3Like\Contracts\FileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
+use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeGCS;
 use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeSpaces;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +18,7 @@ class FileS3Like implements FileS3LikeInterface
     protected ?string $disk = null;
     protected ?string $directory = null;
     protected ?string $repository = null;
-    protected string $visibility = 'public';
+    protected ?string $visibility = 'public';
     protected FileS3LikeInterface $repoInstance;
 
     public function __construct()
@@ -36,6 +37,7 @@ class FileS3Like implements FileS3LikeInterface
         $this->repository = $repository;
         $this->repoInstance = match($repository){
             'spaces' => new FileS3LikeSpaces(),
+            'gcs' => new FileS3LikeGCS(),
             default => throw new \Exception("The repository '$repository' is not supported", 1)
         };
         $this->repoInstance->repository = $repository;
@@ -47,7 +49,7 @@ class FileS3Like implements FileS3LikeInterface
      *
      * @return boolean
      */
-    protected function isAllSetup(): bool
+    public function isAllSetup(): bool
     {
         $defaultMsg = "See the LaravelFileS3Like docs for more info. Access: https://github.com/andreinocenti/laravel-file-s3-like";
 
@@ -55,15 +57,8 @@ class FileS3Like implements FileS3LikeInterface
             throw new \Exception("You must set a valid repository before call any other function. $defaultMsg");
         }
 
-        if (!$this->repoInstance->disk) {
-            throw new \Exception("You must call the disk() function before other functions. $defaultMsg");
-        }
-
-        if (!$this->repoInstance->endpoint) {
-            throw new \Exception("The Disk '{$this->repoInstance->disk}' endpoint is not configured. See the LaravelFileS3Like docs for more info. $defaultMsg");
-        }
-
-        return true;
+        // Delegate to repository instance
+        return $this->repoInstance->isAllSetup();
     }
 
     /**
@@ -75,10 +70,18 @@ class FileS3Like implements FileS3LikeInterface
     public function disk(string $disk): self
     {
         $this->repoInstance->disk = $disk;
+        // Load common configuration if present, but let repository specific check be lax
         $this->repoInstance->endpoint = config("filesystems.disks.$disk.endpoint");
+
+        // We call isAllSetup AFTER setting the properties, but here we can't fully validate
+        // until the specific repository implementation checks its own needs.
+        // However, isAllSetup() in the repository should check $this->disk and other props.
         $this->isAllSetup();
+
         $this->repoInstance->cdnEndpoint = config("filesystems.disks.$disk.cdn_endpoint");
+        // Fallback to endpoint ONLY if endpoint is set (for Spaces), otherwise it might be null for GCS
         $this->repoInstance->cdnEndpoint = $this->repoInstance->cdnEndpoint ?: $this->repoInstance->endpoint;
+
         $this->repoInstance->folder = config("filesystems.disks.$disk.folder") ?: '';
         $this->repoInstance->directory = $this->repoInstance->folder
             ? $this->repoInstance->folder . ($this->repoInstance->directory ?: '')
@@ -104,10 +107,10 @@ class FileS3Like implements FileS3LikeInterface
     /**
      * Sets the visibility of the files. The default is public.
      *
-     * @param string $visibility
+     * @param string|null $visibility
      * @return self
      */
-    public function visibility(string $visibility): self
+    public function visibility(?string $visibility): self
     {
         $this->repoInstance->visibility = $visibility;
         return $this;

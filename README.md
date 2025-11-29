@@ -6,10 +6,11 @@ It supports sending a file URL, a form uploaded file (UploadedFile) or a base64 
 
 It supports generating a presigned url.
 
-
 ## Support
 
-At the actual version it support only Digital Ocean SPACES cloud storage.
+Currently supports:
+- **Digital Ocean SPACES**
+- **Google Cloud Storage (GCS)**
 
 In the future I will add new cloud storages support or accept pull requests.
 
@@ -19,13 +20,14 @@ You should install it via composer:
 
 `composer require andreinocenti/laravel-file-s3-like`
 
+### 1. Digital Ocean Spaces
+
 This package use the Laravel Illuminate\Support\Facades\Storage facade to handle the files.
 
 So you must config the filesystem AWS like disk that you want to use.
 
-Below the optimal config to be used
+Below the optimal config to be used in `config/filesystem.php`:
 
-`config/filesystem.php`
 ```php
 'spaces-disk' => [
     'driver' => 's3',
@@ -42,9 +44,34 @@ Below the optimal config to be used
 ],
 ```
 
+### 2. Google Cloud Storage (GCS)
+
+To use GCS, you need to install the required dependencies:
+
+`composer require google/cloud-storage spatie/laravel-google-cloud-storage`
+
+Then configure the disk in `config/filesystem.php`:
+
+```php
+'gcs' => [
+    'driver' => 'gcs',
+    'project_id' => env('GOOGLE_CLOUD_PROJECT_ID', 'your-project-id'),
+    'key_file' => env('GOOGLE_APPLICATION_CREDENTIALS'), // Path to service account json file
+    'bucket' => env('GOOGLE_CLOUD_STORAGE_BUCKET', 'your-bucket'),
+    'path_prefix' => env('GOOGLE_CLOUD_STORAGE_PATH_PREFIX', null), // Optional: prefix for all files
+    'storage_api_uri' => env('GOOGLE_CLOUD_STORAGE_API_URI', null), // Optional: custom API URI
+    'api_endpoint' => env('GOOGLE_CLOUD_STORAGE_API_ENDPOINT', null), // Optional: custom API endpoint
+    'visibility' => 'public', // Default visibility
+    'throw' => false,
+],
+```
+
+Ensure you have your Google Cloud Service Account JSON key file reachable and the path correctly set in `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
+
 ## Usage
 
-You can use the FileS3LikeSpaces facade
+### Digital Ocean Spaces
+You can use the `FileS3LikeSpaces` facade:
 ```php
 use AndreInocenti\LaravelFileS3Like\Facades\FileS3LikeSpaces;
 
@@ -53,7 +80,7 @@ FileS3LikeSpaces::disk('spaces-disk')
     ->upload($file, 'new-test');
 ```
 
-Or you can use the FileS3Like Facade, if you do you must set the repository() you want to use.
+Or using the generic `FileS3Like` facade:
 ```php
 use AndreInocenti\LaravelFileS3Like\Facades\FileS3Like;
 
@@ -63,10 +90,21 @@ FileS3Like::repository('spaces')
     ->upload($file, 'new-test');
 ```
 
+### Google Cloud Storage (GCS)
+Use the `FileS3Like` facade with the `gcs` repository:
+
+```php
+use AndreInocenti\LaravelFileS3Like\Facades\FileS3Like;
+
+FileS3Like::repository('gcs')
+    ->disk('gcs') // The disk name configured in config/filesystems.php
+    ->directory('uploads')
+    ->upload($file, 'profile-picture');
+```
 
 ## Methods / Accessors
 
-### FileS3Like and its repositories (Eg: FileS3LikeSpaces)
+### FileS3Like and its repositories (Eg: FileS3LikeSpaces, FileS3LikeGCS)
 <table>
     <tr>
         <th>Method</th>
@@ -75,7 +113,7 @@ FileS3Like::repository('spaces')
     <tr>
         <td>repository(string $repository): self</td>
         <td>
-            The repository is the s3 like service that this package support, that you want to use. Eg.: spaces. Check the <a href="#support">Support list</a>
+            The repository is the storage service you want to use. Supported: <code>spaces</code>, <code>gcs</code>.
         </td>
     </tr>
     <tr>
@@ -102,9 +140,10 @@ FileS3Like::repository('spaces')
     <tr>
         <td>save(string $repository): <a href="#diskfile">DiskFile</a></td>
         <td>
-            Upload and update the file on the space disk, purge cache and return the file url.
-            If a file with the same name already exists, it will be overwritten and  the cache will be purged.
-            If it is a new file, it will only be uploaded.
+            Upload and update the file on the storage disk.
+            For <b>Spaces</b>: Purges the CDN cache.
+            For <b>GCS</b>: Same as upload (GCS requires different API for CDN invalidation).
+            If a file with the same name already exists, it will be overwritten.
             If $filename is empty, the name of the file will be aUUID hash.
         </td>
     </tr>
@@ -114,14 +153,16 @@ FileS3Like::repository('spaces')
             Create a presigned URL for direct upload to the path in <code>$filepath</code> (relative to the configured folder).
             <code>$filename</code> is optional and defaults to a UUID; extension is inferred from <code>$fileType</code> or the filename.
             <code>$fileType</code> accepts a mime type or extension (eg: <code>image/png</code>, <code>jpg</code>, <code>image/*</code>) and is used to set Content-Type.
-            <code>$public</code> toggles the ACL between <code>private</code> (default) and <code>public-read</code>.
+            <code>$public</code> toggles the ACL between <code>private</code> (default) and <code>public-read</code> (Note: GCS presigned URLs handle public access differently, but the flag sets the ACL header if supported).
             <code>$expiration</code> is in seconds; default is 900 (15 minutes).
         </td>
     </tr>
     <tr>
         <td>purge(string $filepath): self</td>
         <td>
-            Purges a CDN cache of a file. $filename - Inform the file name and path of the file to be purged.
+            Purges a CDN cache of a file. 
+            <b>Spaces:</b> Calls DigitalOcean CDN API.
+            <b>GCS:</b> No-op (use Google Cloud CDN invalidation API separately).
         </td>
     </tr>
     <tr>
@@ -155,9 +196,10 @@ FileS3Like::repository('spaces')
 Use `presignedUrl` when you need a temporary URL for clients to upload directly to the bucket.
 
 ```php
-use AndreInocenti\LaravelFileS3Like\Facades\FileS3LikeSpaces;
+use AndreInocenti\LaravelFileS3Like\Facades\FileS3Like;
 
-$upload = FileS3LikeSpaces::disk('spaces-disk')
+$upload = FileS3Like::repository('gcs') // or 'spaces'
+    ->disk('gcs')
     ->directory('uploads')
     ->presignedUrl(
         filepath: 'avatars',         // directory inside the configured folder
@@ -174,9 +216,9 @@ The returned `Fluent` object contains the presigned URL and useful metadata:
 
 ```json
 {
-  "presigned_url": "https://bucket.nyc3.digitaloceanspaces.com/uploads/avatars/profile.png?...",
+  "presigned_url": "https://storage.googleapis.com/...",
   "key": "uploads/avatars/profile.png",
-  "public_url": "https://cdn.example.com/uploads/avatars/profile.png",
+  "public_url": "https://storage.googleapis.com/your-bucket/uploads/avatars/profile.png",
   "expires": "2024-04-30 12:34:56",
   "headers": {
     "Content-Type": "image/png",
