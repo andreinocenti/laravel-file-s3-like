@@ -178,7 +178,7 @@ test('save text file on GCS storage with CDN', function () {
         ->upload($file, $filename);
 
     assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
-    
+
     // Check URL starts with CDN
     expect($diskFile->getUrl())->toStartWith($cdn);
     expect($diskFile->getUrl())->toBe($cdn . "/package_test_gcs/{$filename}.txt");

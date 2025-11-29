@@ -67,16 +67,21 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
         $options = $this->visibility ? $this->visibility : [];
         Storage::disk($this->disk)->put($filepath, $file->getFile());
 
-        $url = $this->cdnEndpoint
-            ? rtrim($this->cdnEndpoint, '/') . '/' . $filepath
-            : Storage::disk($this->disk)->url($filepath);
+
         return new DiskFile(
             $filepath,
             $filename,
-            $url,
+            $this->publicUrl($filepath),
             $file->getExtension(),
             $file->getMime()
         );
+    }
+
+    public function publicUrl(string $filepath): string
+    {
+        return $this->cdnEndpoint
+            ? rtrim($this->cdnEndpoint, '/') . '/' . $filepath
+            : Storage::disk($this->disk)->url($filepath);
     }
 
     /**
@@ -187,85 +192,25 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
         // Get the underlying Google Cloud Storage adapter and bucket
         // The disk must be configured with driver 'gcs'
         $disk = Storage::disk($this->disk);
-        
+
         // Use Laravel's standard temporaryUrl method if available
         // This delegates to the adapter's temporaryUrl method
-        try {
-             $options = [
-                 'method' => 'PUT',
-                 'contentType' => $mime,
-                 'version' => 'v4', // Optional
-             ];
-             
-             $signedUrl = $disk->temporaryUrl($filepath, $expirationTimestamp, $options);
+        $options = [
+            'method' => 'PUT',
+            'contentType' => $mime,
+            'version' => 'v4', // Optional
+        ];
 
-             $publicUrl = $this->cdnEndpoint
-                ? rtrim($this->cdnEndpoint, '/') . '/' . $filepath
-                : $disk->url($filepath);
+        $signedUrl = $disk->temporaryUrl($filepath, $expirationTimestamp, $options);
 
-             return new Fluent([
-                'presigned_url' => $signedUrl,
-                'key' => $filepath,
-                'public_url' => $publicUrl,
-                'expires' => $expirationTimestamp->toDateTimeString(),
-                'headers' => [
-                    'Content-Type' => $mime,
-                ],
-                'accepted_mime' => $mime,
-                'accepted_ext' => $ext,
-            ]);
-        } catch (\Throwable $e) {
-            // Fallback or ignore if not supported
-            // If temporaryUrl throws, we might try manual fallback if needed, but usually it implies not supported.
-        }
-
-        $flysystemOperator = $disk->getAdapter();
-        $adapter = $flysystemOperator;
-
-        // Check if we are using the GoogleCloudStorageAdapter (from spatie/laravel-google-cloud-storage -> league/flysystem-google-cloud-storage)
-        // If not, we might be mocking or using a different driver, so we fallback or throw.
-        // For integration tests, this should be the real adapter.
-
-        $bucket = null;
-        if (method_exists($adapter, 'getBucket')) {
-             $bucket = $adapter->getBucket();
-        } elseif (method_exists($adapter, 'bucket')) {
-             $bucket = $adapter->bucket();
-        }
-
-        if ($bucket) {
-             $object = $bucket->object($filepath);
-
-             $signedUrl = $object->signedUrl($expirationTimestamp, [
-                 'method' => 'PUT',
-                 'contentType' => $mime,
-                 // 'version' => 'v4', // Optional, defaults to v2 or v4 depending on auth
-             ]);
-
-             $publicUrl = $this->cdnEndpoint
-                ? rtrim($this->cdnEndpoint, '/') . '/' . $filepath
-                : $disk->url($filepath);
-
-             return new Fluent([
-                'presigned_url' => $signedUrl,
-                'key' => $filepath,
-                'public_url' => $publicUrl,
-                'expires' => $expirationTimestamp->toDateTimeString(),
-                'headers' => [
-                    'Content-Type' => $mime,
-                ],
-                'accepted_mime' => $mime,
-                'accepted_ext' => $ext,
-            ]);
-        }
-
-        // Fallback for mocks or unexpected drivers (e.g. 'local' during some tests)
-         return new Fluent([
-            'presigned_url' => '', // Cannot generate without real key
+        return new Fluent([
+        'presigned_url' => $signedUrl,
             'key' => $filepath,
-            'public_url' => '',
+            'public_url' => $this->publicUrl($filepath),
             'expires' => $expirationTimestamp->toDateTimeString(),
-            'headers' => [],
+            'headers' => [
+                'Content-Type' => $mime,
+            ],
             'accepted_mime' => $mime,
             'accepted_ext' => $ext,
         ]);
