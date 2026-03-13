@@ -107,7 +107,7 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface, Stream
     public function save(UploadedFile|string $file, ?string $filename = null): DiskFile
     {
         $file = $this->upload($file, $filename);
-        static::purge($file->file);
+        $this->purge($file->file);
 
         return $file;
     }
@@ -118,7 +118,7 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface, Stream
     public function saveStream($stream, string $filename, ?string $mime = null): DiskFile
     {
         $file = $this->uploadStream($stream, $filename, $mime);
-        static::purge($file->getFilepath());
+        $this->purge($file->getFilepath());
 
         return $file;
     }

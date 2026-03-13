@@ -65,7 +65,7 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface, Streamabl
         $file = new File($file, $filename);
         $filepath = $this->resolveFilepath($file->getFilename());
 
-        Storage::disk($this->disk)->put($filepath, $file->getFile());
+        Storage::disk($this->disk)->put($filepath, $file->getFile(), $this->visibility);
 
         return $this->makeDiskFile(
             $filepath,
@@ -87,7 +87,7 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface, Streamabl
         $file = File::streamMetadata($filename, $mime);
         $filepath = $this->resolveFilepath($file['filename']);
 
-        Storage::disk($this->disk)->put($filepath, $stream);
+        Storage::disk($this->disk)->put($filepath, $stream, $this->visibility);
 
         return $this->makeDiskFile(
             $filepath,

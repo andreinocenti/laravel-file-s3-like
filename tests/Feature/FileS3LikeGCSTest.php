@@ -101,7 +101,6 @@ test('save image on GCS from url', function () {
     $diskFile = FileS3Like::repository('gcs')
         ->disk('gcs')
         ->directory('package_test_gcs')
-        // ->visibility(null)
         ->upload($url);
 
     assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));

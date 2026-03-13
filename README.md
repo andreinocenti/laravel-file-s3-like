@@ -171,7 +171,7 @@ fclose($stream);
         <td>upload(UploadedFile|string $file, ?string $filename = null): <a href="#diskfile">DiskFile</a></td>
         <td>
             Upload the file to the storage.
-            If $filename is empty, the name of the file will be aUUID hash.
+            If $filename is empty, the name of the file will be a UUID hash.
         </td>
     </tr>
     <tr>
@@ -188,7 +188,7 @@ fclose($stream);
             For <b>Spaces</b>: Purges the CDN cache.
             For <b>GCS</b>: Same as upload (GCS requires different API for CDN invalidation).
             If a file with the same name already exists, it will be overwritten.
-            If $filename is empty, the name of the file will be aUUID hash.
+            If $filename is empty, the name of the file will be a UUID hash.
         </td>
     </tr>
     <tr>
