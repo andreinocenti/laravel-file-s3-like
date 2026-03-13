@@ -89,6 +89,36 @@ class File{
         return $this->mime;
     }
 
+    public static function streamMetadata(string $filename, ?string $mime = null): array
+    {
+        $mimeTypes = (new MimeType())->mimeTypes();
+        $normalizedFilename = trim($filename);
+
+        if ($normalizedFilename === '') {
+            $normalizedFilename = (string) Str::uuid();
+        }
+
+        $extension = strtolower((string) pathinfo($normalizedFilename, PATHINFO_EXTENSION));
+        $normalizedMime = $mime ? strtolower($mime) : '';
+
+        if ($normalizedMime !== '' && $extension === '') {
+            $extension = $mimeTypes->getExtension($normalizedMime) ?: '';
+            if ($extension !== '') {
+                $normalizedFilename .= '.' . $extension;
+            }
+        }
+
+        if ($normalizedMime === '' && $extension !== '') {
+            $normalizedMime = $mimeTypes->getMimeType($extension) ?: '';
+        }
+
+        return [
+            'filename' => $normalizedFilename,
+            'extension' => $extension,
+            'mime' => $normalizedMime,
+        ];
+    }
+
 
     function base64_mimetype(string $encoded, bool $strict = true): ?string
     {

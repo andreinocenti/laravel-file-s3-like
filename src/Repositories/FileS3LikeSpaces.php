@@ -2,6 +2,7 @@
 namespace AndreInocenti\LaravelFileS3Like\Repositories;
 
 use AndreInocenti\LaravelFileS3Like\Contracts\FileS3LikeInterface;
+use AndreInocenti\LaravelFileS3Like\Contracts\StreamableFileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
 use AndreInocenti\LaravelFileS3Like\FileS3Like;
 use AndreInocenti\LaravelFileS3Like\Services\File;
@@ -13,7 +14,7 @@ use Illuminate\Support\Fluent;
 use Illuminate\Support\Str;
 use Mimey\MimeTypes;
 
-class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
+class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface{
     public function __construct()
     {
         $this->repository = 'spaces';
@@ -61,15 +62,36 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
     public function upload(UploadedFile|string $file, ?string $filename = null): DiskFile
     {
         $file = new File($file, $filename);
-        $filename = $file->getFilename();
-        $filepath = "{$this->directory}/{$filename}";
+        $filepath = $this->resolveFilepath($file->getFilename());
         Storage::disk($this->disk)->put($filepath, $file->getFile(), $this->visibility);
-        return new DiskFile(
+
+        return $this->makeDiskFile(
             $filepath,
-            $filename,
-            $this->cdnEndpoint. '/' . $filepath,
+            $file->getFilename(),
             $file->getExtension(),
             $file->getMime()
+        );
+    }
+
+    /**
+     * @param resource $stream
+     */
+    public function uploadStream($stream, string $filename, ?string $mime = null): DiskFile
+    {
+        if (!is_resource($stream)) {
+            throw new \InvalidArgumentException('The stream must be a valid resource.');
+        }
+
+        $file = File::streamMetadata($filename, $mime);
+        $filepath = $this->resolveFilepath($file['filename']);
+
+        Storage::disk($this->disk)->put($filepath, $stream, $this->visibility);
+
+        return $this->makeDiskFile(
+            $filepath,
+            $file['filename'],
+            $file['extension'],
+            $file['mime']
         );
     }
 
@@ -86,6 +108,17 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
     {
         $file = $this->upload($file, $filename);
         static::purge($file->file);
+
+        return $file;
+    }
+
+    /**
+     * @param resource $stream
+     */
+    public function saveStream($stream, string $filename, ?string $mime = null): DiskFile
+    {
+        $file = $this->uploadStream($stream, $filename, $mime);
+        static::purge($file->getFilepath());
 
         return $file;
     }
@@ -236,5 +269,21 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface{
         }
         $exts = MimeTypes::getDefault()->getExtensions($mime);
         return $exts[0] ?? null;
+    }
+
+    private function resolveFilepath(string $filename): string
+    {
+        return "{$this->directory}/{$filename}";
+    }
+
+    private function makeDiskFile(string $filepath, string $filename, string $extension, string $mime): DiskFile
+    {
+        return new DiskFile(
+            $filepath,
+            $filename,
+            $this->cdnEndpoint . '/' . $filepath,
+            $extension,
+            $mime
+        );
     }
 }

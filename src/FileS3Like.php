@@ -3,6 +3,7 @@
 namespace AndreInocenti\LaravelFileS3Like;
 
 use AndreInocenti\LaravelFileS3Like\Contracts\FileS3LikeInterface;
+use AndreInocenti\LaravelFileS3Like\Contracts\StreamableFileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
 use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeGCS;
 use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeSpaces;
@@ -10,7 +11,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Fluent;
 
-class FileS3Like implements FileS3LikeInterface
+class FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface
 {
     protected ?string $cdnEndpoint = null;
     protected ?string $endpoint = null;
@@ -142,6 +143,30 @@ class FileS3Like implements FileS3LikeInterface
     {
         $this->isAllSetup();
         return $this->repoInstance->save($file, $filename);
+    }
+
+    /**
+     * Upload an already opened readable stream to the configured storage disk.
+     *
+     * @param resource $stream
+     */
+    public function uploadStream($stream, string $filename, ?string $mime = null): DiskFile
+    {
+        $this->isAllSetup();
+
+        return $this->repoInstance->uploadStream($stream, $filename, $mime);
+    }
+
+    /**
+     * Save an already opened readable stream to the configured storage disk.
+     *
+     * @param resource $stream
+     */
+    public function saveStream($stream, string $filename, ?string $mime = null): DiskFile
+    {
+        $this->isAllSetup();
+
+        return $this->repoInstance->saveStream($stream, $filename, $mime);
     }
 
     /**

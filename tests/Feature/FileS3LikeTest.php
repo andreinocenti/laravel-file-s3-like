@@ -59,6 +59,30 @@ test('save image from url', function () {
     Storage::disk('spaces')->delete($diskFile->getFilepath());
 });
 
+test('upload stream using generic facade on spaces', function () {
+    $filepath = filesPath() . '/test-file.txt';
+    $stream = fopen($filepath, 'r');
+    $filename = 'generic-stream-' . uniqid() . '.txt';
+
+    $diskFile = FileS3Like::repository('spaces')
+        ->disk('spaces')
+        ->directory('package_test')
+        ->uploadStream($stream, $filename, 'text/plain');
+
+    if (is_resource($stream)) {
+        fclose($stream);
+    }
+
+    expect($diskFile->getFilename())->toBe($filename);
+    expect($diskFile->getFilepath())->toBe("public/package_test/{$filename}");
+    expect($diskFile->getExtension())->toBe('txt');
+    expect($diskFile->getMime())->toBe('text/plain');
+    expect($diskFile->getUrl())->toContain("/package_test/{$filename}");
+    assertTrue(Storage::disk('spaces')->exists($diskFile->getFilepath()));
+
+    Storage::disk('spaces')->delete($diskFile->getFilepath());
+});
+
 
 test('Create and use a Presigned URL for a PNG file with typeFile', function () {
     $filepath = 'test-dir/10';

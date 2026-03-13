@@ -2,6 +2,7 @@
 namespace AndreInocenti\LaravelFileS3Like\Repositories;
 
 use AndreInocenti\LaravelFileS3Like\Contracts\FileS3LikeInterface;
+use AndreInocenti\LaravelFileS3Like\Contracts\StreamableFileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
 use AndreInocenti\LaravelFileS3Like\FileS3Like;
 use AndreInocenti\LaravelFileS3Like\Services\File;
@@ -12,7 +13,7 @@ use Illuminate\Support\Fluent;
 use Illuminate\Support\Str;
 use Mimey\MimeTypes;
 
-class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
+class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface{
     public function __construct()
     {
         $this->repository = 'gcs';
@@ -62,23 +63,37 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
     public function upload(UploadedFile|string $file, ?string $filename = null): DiskFile
     {
         $file = new File($file, $filename);
-        $filename = $file->getFilename();
-        $filepath = "{$this->directory}/{$filename}";
-
-        // if(config("filesystems.disks.{$this->disk}.uniform_bucket_level_access")){
-
-        // }
+        $filepath = $this->resolveFilepath($file->getFilename());
 
         Storage::disk($this->disk)->put($filepath, $file->getFile());
-        $options = $this->visibility ? $this->visibility : [];
 
-
-        return new DiskFile(
+        return $this->makeDiskFile(
             $filepath,
-            $filename,
-            $this->publicUrl($filepath),
+            $file->getFilename(),
             $file->getExtension(),
             $file->getMime()
+        );
+    }
+
+    /**
+     * @param resource $stream
+     */
+    public function uploadStream($stream, string $filename, ?string $mime = null): DiskFile
+    {
+        if (!is_resource($stream)) {
+            throw new \InvalidArgumentException('The stream must be a valid resource.');
+        }
+
+        $file = File::streamMetadata($filename, $mime);
+        $filepath = $this->resolveFilepath($file['filename']);
+
+        Storage::disk($this->disk)->put($filepath, $stream);
+
+        return $this->makeDiskFile(
+            $filepath,
+            $file['filename'],
+            $file['extension'],
+            $file['mime']
         );
     }
 
@@ -100,6 +115,14 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
     {
         // For GCS, save is effectively an upload since we don't have a simple purge API
         return $this->upload($file, $filename);
+    }
+
+    /**
+     * @param resource $stream
+     */
+    public function saveStream($stream, string $filename, ?string $mime = null): DiskFile
+    {
+        return $this->uploadStream($stream, $filename, $mime);
     }
 
     /**
@@ -219,5 +242,21 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
             'accepted_mime' => $mime,
             'accepted_ext' => $ext,
         ]);
+    }
+
+    private function resolveFilepath(string $filename): string
+    {
+        return "{$this->directory}/{$filename}";
+    }
+
+    private function makeDiskFile(string $filepath, string $filename, string $extension, string $mime): DiskFile
+    {
+        return new DiskFile(
+            $filepath,
+            $filename,
+            $this->publicUrl($filepath),
+            $extension,
+            $mime
+        );
     }
 }

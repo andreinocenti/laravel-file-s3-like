@@ -3,6 +3,7 @@
 use AndreInocenti\LaravelFileS3Like\Facades\FileS3LikeSpaces;
 use AndreInocenti\LaravelFileS3Like\Services\File;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 use function PHPUnit\Framework\assertTrue;
@@ -57,4 +58,52 @@ test('test UploadedFile for avif file', function () {
     assertTrue($file->getFilename() == 'new-file.avif');
     assertTrue($file->getMime() == 'image/avif');
     assertTrue($file->getFile() == file_get_contents($filepath));
+});
+
+test('upload stream on spaces facade', function () {
+    $filepath = filesPath() . '/test-file.txt';
+    $stream = fopen($filepath, 'r');
+    $filename = 'stream-test-' . uniqid() . '.txt';
+
+    $diskFile = FileS3LikeSpaces::disk('spaces')
+        ->directory('package_test')
+        ->uploadStream($stream, $filename, 'text/plain');
+
+    if (is_resource($stream)) {
+        fclose($stream);
+    }
+
+    expect($diskFile->getFilename())->toBe($filename);
+    expect($diskFile->getFilepath())->toBe("public/package_test/{$filename}");
+    expect($diskFile->getExtension())->toBe('txt');
+    expect($diskFile->getMime())->toBe('text/plain');
+    expect($diskFile->getUrl())->toContain("/package_test/{$filename}");
+    assertTrue(Storage::disk('spaces')->exists($diskFile->getFilepath()));
+    assertTrue(file_get_contents($diskFile->getUrl()) == file_get_contents($filepath));
+
+    Storage::disk('spaces')->delete($diskFile->getFilepath());
+});
+
+test('save stream on spaces facade purges cache and returns disk file metadata', function () {
+    Http::fake();
+
+    $filepath = filesPath() . '/test-file.txt';
+    $stream = fopen($filepath, 'r');
+    $filename = 'stream-save-test-' . uniqid() . '.txt';
+
+    $diskFile = FileS3LikeSpaces::disk('spaces')
+        ->directory('package_test')
+        ->saveStream($stream, $filename, 'text/plain');
+
+    if (is_resource($stream)) {
+        fclose($stream);
+    }
+
+    expect($diskFile->getFilename())->toBe($filename);
+    expect($diskFile->getFilepath())->toBe("public/package_test/{$filename}");
+    assertTrue(Storage::disk('spaces')->exists($diskFile->getFilepath()));
+
+    Http::assertSentCount(1);
+
+    Storage::disk('spaces')->delete($diskFile->getFilepath());
 });

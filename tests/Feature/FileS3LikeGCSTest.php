@@ -186,3 +186,51 @@ test('save text file on GCS storage with CDN', function () {
     // Cleanup
     Storage::disk('gcs')->delete($diskFile->getFilepath());
 });
+
+test('upload stream on GCS storage', function () {
+    $filepath = filesPath() . '/test-file.txt';
+    $stream = fopen($filepath, 'r');
+    $filename = 'stream-gcs-' . uniqid() . '.txt';
+
+    $diskFile = FileS3Like::repository('gcs')
+        ->disk('gcs')
+        ->directory('package_test_gcs')
+        ->visibility(null)
+        ->uploadStream($stream, $filename, 'text/plain');
+
+    if (is_resource($stream)) {
+        fclose($stream);
+    }
+
+    expect($diskFile->getFilename())->toBe($filename);
+    expect($diskFile->getFilepath())->toBe("package_test_gcs/{$filename}");
+    expect($diskFile->getExtension())->toBe('txt');
+    expect($diskFile->getMime())->toBe('text/plain');
+    assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
+
+    Storage::disk('gcs')->delete($diskFile->getFilepath());
+});
+
+test('save stream on GCS storage behaves like upload', function () {
+    $filepath = filesPath() . '/test-file.txt';
+    $stream = fopen($filepath, 'r');
+    $filename = 'stream-save-gcs-' . uniqid() . '.txt';
+
+    $diskFile = FileS3Like::repository('gcs')
+        ->disk('gcs')
+        ->directory('package_test_gcs')
+        ->visibility(null)
+        ->saveStream($stream, $filename, 'text/plain');
+
+    if (is_resource($stream)) {
+        fclose($stream);
+    }
+
+    expect($diskFile->getFilename())->toBe($filename);
+    expect($diskFile->getFilepath())->toBe("package_test_gcs/{$filename}");
+    expect($diskFile->getExtension())->toBe('txt');
+    expect($diskFile->getMime())->toBe('text/plain');
+    assertTrue(Storage::disk('gcs')->exists($diskFile->getFilepath()));
+
+    Storage::disk('gcs')->delete($diskFile->getFilepath());
+});

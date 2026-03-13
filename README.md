@@ -105,6 +105,40 @@ FileS3Like::repository('gcs')
     ->upload($file, 'profile-picture');
 ```
 
+### Upload from stream
+
+Use `uploadStream` when you already have an open readable stream and want to avoid loading the full file into memory.
+
+```php
+use AndreInocenti\LaravelFileS3Like\Facades\FileS3Like;
+
+$stream = fopen(storage_path('app/large-video.mp4'), 'r');
+
+$diskFile = FileS3Like::repository('spaces') // or 'gcs'
+    ->disk('spaces')
+    ->directory('videos')
+    ->uploadStream($stream, 'large-video.mp4', 'video/mp4');
+
+fclose($stream);
+```
+
+Use `saveStream` when you want the same semantics as `save`:
+
+- `spaces`: upload and purge CDN cache
+- `gcs`: same behavior as upload
+
+```php
+use AndreInocenti\LaravelFileS3Like\Facades\FileS3LikeSpaces;
+
+$stream = fopen(storage_path('app/banner.png'), 'r');
+
+$diskFile = FileS3LikeSpaces::disk('spaces-disk')
+    ->directory('images')
+    ->saveStream($stream, 'banner.png', 'image/png');
+
+fclose($stream);
+```
+
 ## Methods / Accessors
 
 ### FileS3Like and its repositories (Eg: FileS3LikeSpaces, FileS3LikeGCS)
@@ -141,6 +175,13 @@ FileS3Like::repository('gcs')
         </td>
     </tr>
     <tr>
+        <td>uploadStream(resource $stream, string $filename, ?string $mime = null): <a href="#diskfile">DiskFile</a></td>
+        <td>
+            Upload an already opened readable stream directly to the storage disk.
+            Use this for large files to avoid loading the whole file into memory.
+        </td>
+    </tr>
+    <tr>
         <td>save(string $repository): <a href="#diskfile">DiskFile</a></td>
         <td>
             Upload and update the file on the storage disk.
@@ -148,6 +189,14 @@ FileS3Like::repository('gcs')
             For <b>GCS</b>: Same as upload (GCS requires different API for CDN invalidation).
             If a file with the same name already exists, it will be overwritten.
             If $filename is empty, the name of the file will be aUUID hash.
+        </td>
+    </tr>
+    <tr>
+        <td>saveStream(resource $stream, string $filename, ?string $mime = null): <a href="#diskfile">DiskFile</a></td>
+        <td>
+            Save an already opened readable stream to the storage disk.
+            For <b>Spaces</b>: uploads and purges CDN cache.
+            For <b>GCS</b>: same behavior as <code>uploadStream</code>.
         </td>
     </tr>
     <tr>
