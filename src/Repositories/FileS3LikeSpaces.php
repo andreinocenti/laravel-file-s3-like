@@ -243,6 +243,13 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface, Stream
         ]);
     }
 
+    public function publicUrl(string $filepath): string
+    {
+        return $this->cdnEndpoint
+            ? rtrim($this->cdnEndpoint, '/') . '/' . $filepath
+            : Storage::disk($this->disk)->url($filepath);
+    }
+
 
     /**
      * @return string|null
@@ -271,17 +278,12 @@ class FileS3LikeSpaces extends FileS3Like implements FileS3LikeInterface, Stream
         return $exts[0] ?? null;
     }
 
-    private function resolveFilepath(string $filename): string
-    {
-        return "{$this->directory}/{$filename}";
-    }
-
     private function makeDiskFile(string $filepath, string $filename, string $extension, string $mime): DiskFile
     {
         return new DiskFile(
             $filepath,
             $filename,
-            $this->cdnEndpoint . '/' . $filepath,
+            $this->publicUrl($filepath),
             $extension,
             $mime
         );

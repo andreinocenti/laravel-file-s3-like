@@ -154,6 +154,10 @@ class FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface
     {
         $this->isAllSetup();
 
+        if (!$this->repoInstance instanceof StreamableFileS3LikeInterface) {
+            throw new \Exception("The current repository '{$this->repository}' does not support stream uploads.");
+        }
+
         return $this->repoInstance->uploadStream($stream, $filename, $mime);
     }
 
@@ -165,6 +169,10 @@ class FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface
     public function saveStream($stream, string $filename, ?string $mime = null): DiskFile
     {
         $this->isAllSetup();
+
+        if (!$this->repoInstance instanceof StreamableFileS3LikeInterface) {
+            throw new \Exception("The current repository '{$this->repository}' does not support stream uploads.");
+        }
 
         return $this->repoInstance->saveStream($stream, $filename, $mime);
     }
@@ -248,5 +256,10 @@ class FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface
     {
         $this->isAllSetup();
         return $this->repoInstance->presignedUrl($filepath, $filename, $expiration, $fileType, $public);
+    }
+
+    protected function resolveFilepath(string $filename): string
+    {
+        return "{$this->directory}/{$filename}";
     }
 }

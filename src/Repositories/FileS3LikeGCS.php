@@ -244,11 +244,6 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface, Streamabl
         ]);
     }
 
-    private function resolveFilepath(string $filename): string
-    {
-        return "{$this->directory}/{$filename}";
-    }
-
     private function makeDiskFile(string $filepath, string $filename, string $extension, string $mime): DiskFile
     {
         return new DiskFile(
