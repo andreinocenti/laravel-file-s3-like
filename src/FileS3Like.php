@@ -5,6 +5,7 @@ namespace AndreInocenti\LaravelFileS3Like;
 use AndreInocenti\LaravelFileS3Like\Contracts\FileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\Contracts\StreamableFileS3LikeInterface;
 use AndreInocenti\LaravelFileS3Like\DataTransferObjects\DiskFile;
+use AndreInocenti\LaravelFileS3Like\Exceptions\StreamNotSupportedException;
 use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeGCS;
 use AndreInocenti\LaravelFileS3Like\Repositories\FileS3LikeSpaces;
 use Illuminate\Http\UploadedFile;
@@ -155,7 +156,7 @@ class FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface
         $this->isAllSetup();
 
         if (!$this->repoInstance instanceof StreamableFileS3LikeInterface) {
-            throw new \Exception("The current repository '{$this->repository}' does not support stream uploads.");
+            throw new StreamNotSupportedException("The current repository '{$this->repository}' does not support stream uploads.");
         }
 
         return $this->repoInstance->uploadStream($stream, $filename, $mime);
@@ -171,7 +172,7 @@ class FileS3Like implements FileS3LikeInterface, StreamableFileS3LikeInterface
         $this->isAllSetup();
 
         if (!$this->repoInstance instanceof StreamableFileS3LikeInterface) {
-            throw new \Exception("The current repository '{$this->repository}' does not support stream uploads.");
+            throw new StreamNotSupportedException("The current repository '{$this->repository}' does not support stream uploads.");
         }
 
         return $this->repoInstance->saveStream($stream, $filename, $mime);

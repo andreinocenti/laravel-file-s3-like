@@ -91,8 +91,8 @@ class File{
 
     public static function streamMetadata(string $filename, ?string $mime = null): array
     {
-        static $mimeTypes = null;
-        $mimeTypes = $mimeTypes ?: (new MimeType())->mimeTypes();
+        static $mimeTypes;
+        $mimeTypes ??= (new MimeType())->mimeTypes();
         $normalizedFilename = trim($filename);
 
         if ($normalizedFilename === '') {
