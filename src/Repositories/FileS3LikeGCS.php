@@ -64,8 +64,13 @@ class FileS3LikeGCS extends FileS3Like implements FileS3LikeInterface{
         $file = new File($file, $filename);
         $filename = $file->getFilename();
         $filepath = "{$this->directory}/{$filename}";
-        $options = $this->visibility ? $this->visibility : [];
+
+        // if(config("filesystems.disks.{$this->disk}.uniform_bucket_level_access")){
+
+        // }
+
         Storage::disk($this->disk)->put($filepath, $file->getFile());
+        $options = $this->visibility ? $this->visibility : [];
 
 
         return new DiskFile(

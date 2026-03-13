@@ -50,45 +50,13 @@ class LaravelFileS3LikeTest extends \Orchestra\Testbench\TestCase
         $app['config']->set("filesystems.disks.gcs", [
             'driver' => 'gcs',
             'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
-            // 'keyFilePath' => __DIR__ . '/../application_default_credentials.json', // Use correct relative path to root
             'key_file' =>  $keyFile, // Use correct relative path to root,
             'bucket' => env('GOOGLE_CLOUD_STORAGE_BUCKET'),
             'path_prefix' => env('GOOGLE_CLOUD_STORAGE_PATH_PREFIX'),
             'storage_api_uri' => env('GOOGLE_CLOUD_STORAGE_API_URI'), // Optional
             'cdn_endpoint' => env('GOOGLE_CLOUD_STORAGE_BUCKET_CDN'),
             'throw' => true,
-            'uniform_bucket_level_access' => true,
-            'uniformBucketLevelAccess' => true,
+            'visibility_handler' => \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility::class,
         ]);
-
-        $app->booted(function () use ($app) {
-            $app['filesystem']->extend('gcs', function ($app, $config) {
-                $storageClient = new StorageClient([
-                    'projectId' => $config['project_id'],
-                    'keyFile' => $config['key_file'],
-                ]);
-                $bucket = $storageClient->bucket($config['bucket']);
-                $pathPrefix = $config['path_prefix'] ?? '';
-                $storageApiUri = $config['storage_api_uri'] ?? null;
-
-                $visibilityHandler = new UniformBucketLevelAccessVisibility();
-
-                $adapter = new LeagueGoogleCloudStorageAdapter(
-                    $bucket,
-                    $pathPrefix,
-                    $visibilityHandler,
-                    $storageApiUri
-                );
-
-                $flysystem = new Flysystem($adapter, $config);
-
-                return new GoogleCloudStorageAdapter(
-                    $flysystem,
-                    $adapter,
-                    $config,
-                    $storageClient
-                );
-            });
-        });
     }
 }

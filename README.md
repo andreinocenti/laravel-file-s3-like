@@ -12,8 +12,6 @@ Currently supports:
 - **Digital Ocean SPACES**
 - **Google Cloud Storage (GCS)**
 
-In the future I will add new cloud storages support or accept pull requests.
-
 ## Configuration
 
 You should install it via composer:
@@ -50,7 +48,12 @@ To use GCS, you need to install the required dependencies:
 
 `composer require google/cloud-storage spatie/laravel-google-cloud-storage`
 
+To see more GCS filesystem configs check: `https://github.com/spatie/laravel-google-cloud-storage`
+
+For uniform bucket level access use: `'visibility_handler' => \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility::class`
+
 Then configure the disk in `config/filesystem.php`:
+
 
 ```php
 'gcs' => [
@@ -61,7 +64,7 @@ Then configure the disk in `config/filesystem.php`:
     'path_prefix' => env('GOOGLE_CLOUD_STORAGE_PATH_PREFIX', null), // Optional: prefix for all files
     'storage_api_uri' => env('GOOGLE_CLOUD_STORAGE_API_URI', null), // Optional: custom API URI
     'api_endpoint' => env('GOOGLE_CLOUD_STORAGE_API_ENDPOINT', null), // Optional: custom API endpoint
-    'visibility' => 'public', // Default visibility
+    'visibility_handler' => \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility::class, // for uniform bucket level access
     'throw' => false,
 ],
 ```
